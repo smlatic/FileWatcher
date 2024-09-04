@@ -5,15 +5,11 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import threading
 import time
-import json
-from datetime import datetime
-
-SETUP_FILE = "setup.json"  # Define the file name for storing setup
 
 class FileMonitorApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("FileMonitorOI")
+        self.root.title("File Monitor App")
         self.root.geometry("400x300")
 
         # Create and position buttons
@@ -29,12 +25,9 @@ class FileMonitorApp:
         # Variables to store alarms and file history
         self.folder_to_watch = None
         self.alarms = []  # List to store alarms
-        self.file_history = []  # Stores file history (filename, timestamp, file size)
+        self.file_history = []  # Stores file history
         self.config_window_open = False  # Track if config window is open
         self.config_window = None  # Track the actual config window instance
-
-        # Load setup if available
-        self.load_setup()
 
         # Ensure proper shutdown when the window is closed
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -63,6 +56,9 @@ class FileMonitorApp:
         for i, alarm in enumerate(self.alarms):
             alarm_row = tk.Frame(alarm_frame)  # Create a frame for each alarm row
             alarm_row.pack(fill="x", pady=5)  # Stack vertically
+            
+            alarm_label = tk.Label(alarm_row, text=f"Alarm {i+1}: {alarm['folder']}")
+            alarm_label.pack(side="left", padx=5)
 
             # Checkbox (ticker) to toggle the alarm on/off
             alarm_checkbox = tk.Checkbutton(
@@ -71,30 +67,11 @@ class FileMonitorApp:
                 variable=alarm["active"],
                 command=lambda idx=i: self.toggle_alarm(idx)
             )
-            alarm_checkbox.pack(side="left", padx=5)
-
-            # Delete Button
-            delete_button = tk.Button(
-                alarm_row,
-                text="Delete",
-                command=lambda idx=i: self.delete_alarm(idx)
-            )
-            delete_button.pack(side="left", padx=5)
-
-            # Alarm Label
-            alarm_label = tk.Label(alarm_row, text=f"{alarm['folder']}")
-            alarm_label.pack(side="left", padx=5)
+            alarm_checkbox.pack(side="right", padx=5)
 
         # Add Alarm button at the bottom of the window to add new alarms
         add_alarm_button = tk.Button(alarm_frame, text="Add Alarm", command=self.add_alarm)
         add_alarm_button.pack(pady=10)
-
-    def delete_alarm(self, alarm_index):
-        """Delete an alarm and refresh the config window."""
-        alarm = self.alarms[alarm_index]
-        self.stop_monitoring(alarm)
-        del self.alarms[alarm_index]  # Remove the alarm from the list
-        self.open_config_window()  # Refresh the config window
 
     def close_config_window(self, config_window):
         """Close the config window and reset the state."""
@@ -247,44 +224,18 @@ class FileMonitorApp:
             scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
             history_listbox = tk.Listbox(history_window, yscrollcommand=scrollbar.set)
-            for i, file_entry in enumerate(self.file_history):
-                history_listbox.insert(tk.END, f"{i+1}: {file_entry}")
+            for i, file in enumerate(self.file_history):
+                history_listbox.insert(tk.END, f"{i+1}: {file}")
             history_listbox.pack(fill="both", expand=True, padx=10, pady=10)
 
             scrollbar.config(command=history_listbox.yview)
 
     def save_setup(self):
-        """Save the current setup to a JSON file."""
-        setup_data = []
-        for alarm in self.alarms:
-            setup_data.append({
-                "folder": alarm["folder"],
-                "active": alarm["active"].get()
-            })
-        with open(SETUP_FILE, 'w') as setup_file:
-            json.dump(setup_data, setup_file, indent=4)
-        messagebox.showinfo("Save Setup", "Setup saved successfully.")
-
-    def load_setup(self):
-        """Load the setup from the JSON file if it exists."""
-        if os.path.exists(SETUP_FILE):
-            with open(SETUP_FILE, 'r') as setup_file:
-                setup_data = json.load(setup_file)
-                for alarm_data in setup_data:
-                    new_alarm = {
-                        "folder": alarm_data["folder"],
-                        "active": tk.BooleanVar(value=alarm_data["active"]),
-                        "popup": None,
-                        "observer": Observer(),
-                        "files": {}
-                    }
-                    self.alarms.append(new_alarm)
-                    if alarm_data["active"]:
-                        self.start_monitoring(new_alarm)
+        # Placeholder for saving the current setup
+        messagebox.showinfo("Save Setup", "This will save the setup in future steps.")
 
     def on_closing(self):
         """Handle the app shutdown cleanly when the window is closed."""
-        self.save_setup()  # Automatically save the setup when closing
         for alarm in self.alarms:
             self.stop_monitoring(alarm)
         self.root.quit()  # Stops the main loop
@@ -304,24 +255,15 @@ class FileChangeHandler(FileSystemEventHandler):
         if not event.is_directory:
             file_path = event.src_path
             file_name = os.path.basename(file_path)
-            file_size = os.path.getsize(file_path)
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Get current timestamp
-
             with self.lock:
-                self.file_sizes[file_path] = file_size
+                self.file_sizes[file_path] = os.path.getsize(file_path)
                 self.alarm["files"][file_path] = {
                     "name": file_name,
                     "size": self.file_sizes[file_path],
                     "timer": None
                 }
-
-            # Add file history with timestamp and size
-            history_entry = f"File: {file_name}, Size: {file_size} bytes, Timestamp: {timestamp}"
-            self.app.file_history.append(history_entry)
-
             # Show the alarm popup with green background
             self.app.root.after(0, lambda: self.app.show_alarm_popup(self.alarm, file_name, changing=True))
-
             # Start the size check timer
             self.start_size_check(file_path)
 
@@ -359,6 +301,8 @@ class FileChangeHandler(FileSystemEventHandler):
                         file_name = os.path.basename(file_path)
                         # Update the popup to red
                         self.app.root.after(0, lambda: self.app.show_alarm_popup(self.alarm, file_name, changing=False))
+                        # Add to file history
+                        self.app.file_history.append(file_name)
                         # Remove from tracking
                         del self.file_sizes[file_path]
                         del self.alarm["files"][file_path]
@@ -371,6 +315,7 @@ class FileChangeHandler(FileSystemEventHandler):
                     # File might have been deleted before the check
                     file_name = os.path.basename(file_path)
                     self.app.root.after(0, lambda: self.app.show_alarm_popup(self.alarm, file_name, changing=False))
+                    self.app.file_history.append(file_name)
                     del self.file_sizes[file_path]
                     del self.alarm["files"][file_path]
 
