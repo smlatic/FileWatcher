@@ -3,10 +3,12 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers.polling import PollingObserver
 import threading
 import time
 import json
 from datetime import datetime
+
 
 SETUP_FILE = "setup.json"  # Define the file name for storing setup
 
@@ -110,7 +112,7 @@ class FileMonitorApp:
                 "folder": folder,
                 "active": tk.BooleanVar(value=False),
                 "popup": None,
-                "observer": Observer(),  # Create a new observer for each alarm
+                "observer": PollingObserver(),  # Use PollingObserver instead of Observer for better network drive support
                 "files": {}  # Dictionary to track files and their sizes
             }
             self.alarms.append(new_alarm)
@@ -131,7 +133,7 @@ class FileMonitorApp:
 
         # Start monitoring the folder with the alarm's observer
         event_handler = FileChangeHandler(self, alarm)
-        alarm["observer"].schedule(event_handler, alarm["folder"], recursive=True)
+        alarm["observer"].schedule(event_handler, alarm["folder"], recursive=True)  # Enable recursive monitoring
 
         # Start the observer (each alarm has its own observer)
         if not alarm["observer"].is_alive():

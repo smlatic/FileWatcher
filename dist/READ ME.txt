@@ -1,0 +1,16 @@
+
+ #######   ######  ########    ###    ##    ##    #### ##    ## ######## #### ##    ## #### ######## ##    ## 
+##     ## ##    ## ##         ## ##   ###   ##     ##  ###   ## ##        ##  ###   ##  ##     ##     ##  ##  
+##     ## ##       ##        ##   ##  ####  ##     ##  ####  ## ##        ##  ####  ##  ##     ##      ####   
+##     ## ##       ######   ##     ## ## ## ##     ##  ## ## ## ######    ##  ## ## ##  ##     ##       ##    
+##     ## ##       ##       ######### ##  ####     ##  ##  #### ##        ##  ##  ####  ##     ##       ##    
+##     ## ##    ## ##       ##     ## ##   ###     ##  ##   ### ##        ##  ##   ###  ##     ##       ##    
+ #######   ######  ######## ##     ## ##    ##    #### ##    ## ##       #### ##    ## ####    ##       ##    
+
+IT IS AN OFFENCE TO CONTINUE WITHOUT PROPER AUTHORISATION.
+
+This system is restricted to authorised users.
+Individuals who attempt unauthorised access will be prosecuted.
+If you are unauthorised, terminate access now.
+
+NOTE: Files may be automatically purged after 21 days, this is NOT long term storage!
